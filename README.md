@@ -1,21 +1,14 @@
 # CTF-Tools
+> A collection of scripts and utilities for Capture the Flag (CTF) competitions.  
 
-A growing collection of scripts and utilities for Capture the Flag (CTF) competitions.  
-The goal of this repository is to provide easy-to-use tools that can save me time during competitions and serve as my personal toolkit for future challenges.
-
----
 
 ## Current Projects
 
 ### Wiki Table Scraper to Wordlist
-A Python script that scrapes the list of Game Boy games from Wikipedia and builds a wordlist.  
-This can be useful for:
-- **Wordlist generation** (for cracking challenges or custom dictionaries)
-- **General scripting practice** with `BeautifulSoup`
+A Python script that scrapes the columns from a Wikipedia table and builds a wordlist.  
+- Wordlist generation for cracking challenges needing custom dictionaries
+- General scripting practice with `BeautifulSoup`
 
-Features:
-- Grabs all table columns across multiple tables
-- Saves results to a UTF-8 encoded `wordlist.txt`
 ---
 
 
