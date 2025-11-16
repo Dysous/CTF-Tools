@@ -15,7 +15,7 @@ import json
 import os
 import re
 import sys
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, parse_qsl, urlencode, urlunparse
 
 from bs4 import BeautifulSoup
 
@@ -236,17 +236,17 @@ def parse_shelf(html: str, shelf_url: str | None = None) -> list[dict]:
         )
 
         book_obj = {
-            "keyHash": key_hash,
-            "source": source,              # BookSource.OTHER
-            "externalId": external_id,     # Goodreads numeric id
+            #"keyHash": key_hash,
+            "source": source,              #BookSource.OTHER (our enum doesn't include goodreads)
+            #"externalId": external_id,     #goodreads numeric id
             "title": title,
             "authors": authors,
-            "publishedYear": published_year,
+            #"publishedYear": published_year,
             "pageCount": page_count,
-            "publisher": None,             # Not on shelf page
-            "categories": None,            # Not on shelf page
+            #"publisher": None,             #would need to grab for other page
+            #"categories": None,            #would need to grab for other page
             "coverUrl": cover_url,
-            "goodreadsUrl": book_url,
+            #"goodreadsUrl": book_url,
         }
 
         books.append(book_obj)
@@ -264,12 +264,56 @@ def main() -> None:
         ),
     )
     args = ap.parse_args()
-
     resolved = resolve_input(args.shelf)
-    html = load_html(resolved)
-    books = parse_shelf(html, shelf_url=resolved)
+
+    #just parse once if local html file
+    if os.path.exists(resolved):
+        html = load_html(resolved)
+        books = parse_shelf(html, shelf_url=resolved)
+
+    #paginate goodreads.com shelf url
+    elif "goodreads.com/review/list" in resolved:
+        all_books: list[dict] = []
+        page = 1
+
+        while True:
+            #parse and rebuild url with per_page + page
+            parsed = urlparse(resolved)
+            qs = dict(parse_qsl(parsed.query))
+
+            #max per_page goodreads will give is 200, yet this fails at 200?
+            #largest working value I found was 15 might need to tweak
+            qs.setdefault("per_page", "10")
+            qs["page"] = str(page)
+
+            page_url = urlunparse(parsed._replace(query=urlencode(qs)))
+
+            html = load_html(page_url)
+            page_books = parse_shelf(html, shelf_url=page_url)
+
+            if not page_books:
+                break
+
+            all_books.extend(page_books)
+
+            #if fewer than per page (per_page), then scraper is at the last page
+            try:
+                per_page = int(qs["per_page"])
+            except ValueError:
+                per_page = None
+
+            if per_page is None or len(page_books) < per_page:
+                break
+
+            page += 1
+
+        books = all_books
+    else:
+        html = load_html(resolved)
+        books = parse_shelf(html, shelf_url=resolved)
 
     json.dump(books, fp=sys.stdout, indent=2, ensure_ascii=False)
+
 
 
 if __name__ == "__main__":
