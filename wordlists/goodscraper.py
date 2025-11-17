@@ -150,15 +150,16 @@ def extract_year_from_date(text: str | None) -> int | None:
 
 
 def compute_key_hash(source: str, external_id: str | None,
-                     title: str, authors: str | None) -> str:
+                     title: str, authors: list[str] | None) -> str:
     """
     Compute a deterministic key hash "source + externalId + title + authors" 
     """
+    authors_str = ", ".join(a.strip() for a in authors) if authors else ""
     parts = [
         source or "",
         external_id or "",
         title or "",
-        authors or "",
+        authors_str,
     ]
     raw = "|".join(p.strip() for p in parts)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
@@ -195,13 +196,15 @@ def parse_shelf(html: str, shelf_url: str | None = None) -> list[dict]:
 
         #author
         author_td = row.find("td", class_="field author")
-        authors = None
+        authors: list[str] | None = None
         if author_td:
             author_links = author_td.find_all("a")
             if author_links:
-                authors = ", ".join(a.get_text(strip=True) for a in author_links)
+                authors = [a.get_text(strip=True) for a in author_links]
             else:
-                authors = author_td.get_text(strip=True) or None
+                text = author_td.get_text(strip=True)
+                if text:
+                    authors = [text] 
 
         #cover url (image)
         cover_td = row.find("td", class_="field cover")
@@ -312,7 +315,7 @@ def main() -> None:
         html = load_html(resolved)
         books = parse_shelf(html, shelf_url=resolved)
 
-    json.dump(books, fp=sys.stdout, indent=2, ensure_ascii=False)
+    json.dump(books, fp=sys.stdout, indent=2, ensure_ascii=True)
 
 
 
