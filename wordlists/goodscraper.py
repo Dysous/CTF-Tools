@@ -213,10 +213,10 @@ def parse_shelf(html: str, shelf_url: str | None = None) -> list[dict]:
             img = cover_td.find("img")
             if img and img.get("src"):
                 compressed_url = img["src"]
-                #get larger image by removing "._SY75_" or similar size suffix
+                #get larger image by removing "._SY75_" or other size suffix
                 #also remove i.gr-assets.com and replace with m.media-amazon.com
                 cover_url = re.sub(r"\._SY\d+_", "", compressed_url)
-                #also get ride of ._SX50_ or similar
+                #also get ride of ._SX50_ 
                 cover_url = re.sub(r"\._SX\d+_", "", cover_url)
                 cover_url = re.sub(r"i\.gr-assets\.com", "m.media-amazon.com", cover_url)
             elif img and img.get("data-src"):
