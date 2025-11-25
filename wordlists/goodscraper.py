@@ -212,6 +212,15 @@ def parse_shelf(html: str, shelf_url: str | None = None) -> list[dict]:
         if cover_td:
             img = cover_td.find("img")
             if img and img.get("src"):
+                compressed_url = img["src"]
+                #get larger image by removing "._SY75_" or similar size suffix
+                #also remove i.gr-assets.com and replace with m.media-amazon.com
+                cover_url = re.sub(r"\._SY\d+_", "", compressed_url)
+                #also get ride of ._SX50_ or similar
+                cover_url = re.sub(r"\._SX\d+_", "", cover_url)
+                cover_url = re.sub(r"i\.gr-assets\.com", "m.media-amazon.com", cover_url)
+            elif img and img.get("data-src"):
+                #lazy loaded images use data-src
                 cover_url = img["src"]
 
         #page count
